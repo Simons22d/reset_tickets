@@ -1,5 +1,5 @@
 import eventlet.wsgi
-from flask import jsonify,Flask
+from flask import jsonify, Flask
 import socketio
 import random
 
@@ -11,11 +11,13 @@ sio = socketio.Client()
 
 app = Flask(__name__)
 
-@app.route("/ticket/reset",methods=["POST"])
+
+@app.route("/ticket/reset", methods=["POST"])
 def reset():
-    code = {"code":random.getrandbits()}
-    sio.emit("reset_tickets",code)
+    code = {"code": random.getrandbits()}
+    sio.emit("reset_tickets", code)
     return jsonify(code)
+
 
 @sio.event
 def connect():
@@ -31,7 +33,6 @@ try:
     sio.connect("http://localhost:5000/")
 except socketio.exceptions.ConnectionError:
     print("Error! Could not connect to the socket server.")
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=4000)

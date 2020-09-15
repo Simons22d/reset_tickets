@@ -26,7 +26,6 @@ timeStart = '12:00AM'
 timeEnd = '12:10AM'
 timeEnd = datetime.strptime(timeEnd, "%I:%M%p")
 timeStart = datetime.strptime(timeStart, "%I:%M%p")
-
 timeNow = datetime.strptime(str(datetime.now().strftime("%I:%M%p")), "%I:%M%p")
 
 
@@ -40,8 +39,11 @@ def reset():
 while True:
     time.sleep(20)
     if isNowInTimePeriod(timeStart, timeEnd, timeNow):
-        reset()
-        print("Reseting .... !!")
+        code = reset()
+        with open("reset.txt","w+") as file:
+            file.write(f"we just reset the file {code}")
+
+        print("Resetting .... !!")
     else:
         print("its not time to reset yet!!")
 

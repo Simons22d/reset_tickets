@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 def isNowInTimePeriod(startTime, endTime, nowTime):
     if startTime < endTime:
-        # startTime <= nowTime <= endTime
+        # startTime <= nowTime and nowTime <= endTime
         return startTime <= nowTime <= endTime
     else:
         return nowTime >= startTime or nowTime <= endTime
@@ -62,5 +62,5 @@ except socketio.exceptions.ConnectionError:
     print("Error! Could not connect to the socket server.")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True, port=9999)
-    # eventlet.wsgi.server(eventlet.listen(('', 9999)), app)
+    # app.run(host="0.0.0.0", debug=True, port=9999)
+    eventlet.wsgi.server(eventlet.listen(('', 9999)), app)

@@ -1,5 +1,5 @@
-import eventlet.wsgi
-from flask import jsonify, Flask
+from eventlet import wsgi
+from flask import Flask
 import socketio
 import random
 import time
@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 def isNowInTimePeriod(startTime, endTime, nowTime):
     if startTime < endTime:
-        # startTime <= nowTime and nowTime <= endTime
+        # nowTime >= startTime and nowTime <= endTime
         return startTime <= nowTime <= endTime
     else:
         return nowTime >= startTime or nowTime <= endTime
@@ -31,16 +31,18 @@ timeNow = datetime.strptime(str(datetime.now().strftime("%I:%M%p")), "%I:%M%p")
 
 def reset():
     print("reset ... called")
-    code = {"code": random.getrandbits()}
+    code = {"code": random.getrandbits(69)}
     sio.emit("reset_tickets", code)
-    return jsonify(code)
+    return dict(code)
 
 
 while True:
-    time.sleep(20)
+    time.sleep(2)
     if isNowInTimePeriod(timeStart, timeEnd, timeNow):
         code = reset()
-        with open("reset.txt","w+") as file:
+        import os
+        filename = datetime.now().strftime("%a, %d %b %Y %H.%M")
+        with open(os.path.join("logs",f"{filename}.txt"),"w+") as file:
             file.write(f"we just reset the file {code}")
 
         print("Resetting .... !!")

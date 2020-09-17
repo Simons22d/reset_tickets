@@ -23,7 +23,7 @@ def isNowInTimePeriod(startTime, endTime, nowTime):
 
 
 timeStart = '12:00AM'
-timeEnd = '12:10AM'
+timeEnd = '12:03AM'
 timeEnd = datetime.strptime(timeEnd, "%I:%M%p")
 timeStart = datetime.strptime(timeStart, "%I:%M%p")
 timeNow = datetime.strptime(str(datetime.now().strftime("%I:%M%p")), "%I:%M%p")
@@ -37,7 +37,7 @@ def reset():
 
 
 while True:
-    time.sleep(2)
+    time.sleep(30)
     if isNowInTimePeriod(timeStart, timeEnd, timeNow):
         code = reset()
         import os

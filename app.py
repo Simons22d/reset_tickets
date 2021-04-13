@@ -1,17 +1,11 @@
 from eventlet import wsgi
-from flask import Flask
-import socketio
-import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
+import requests
+from dateutil import parser
 
 link = "http://localhost:4000"
 link_ip = "159.65.144.235"
-
-# standard Python
-sio = socketio.Client()
-
-app = Flask(__name__)
 
 
 def isNowInTimePeriod(startTime, endTime, nowTime):
@@ -22,48 +16,40 @@ def isNowInTimePeriod(startTime, endTime, nowTime):
         return nowTime >= startTime or nowTime <= endTime
 
 
-timeStart = '12:00AM'
-timeEnd = '12:03AM'
-timeEnd = datetime.strptime(timeEnd, "%I:%M%p")
-timeStart = datetime.strptime(timeStart, "%I:%M%p")
-timeNow = datetime.strptime(str(datetime.now().strftime("%I:%M%p")), "%I:%M%p")
+def log(msg):
+    print(f"{datetime.now().strftime('%d:%m:%Y %H:%M:%S')} — {msg}")
+    return True
 
 
-def reset():
-    print("reset ... called")
-    code = {"code": random.getrandbits(69)}
-    sio.emit("reset_tickets", code)
-    return dict(code)
-
-
+# get db reset time
 while True:
-    time.sleep(30)
-    if isNowInTimePeriod(timeStart, timeEnd, timeNow):
-        code = reset()
-        import os
-        filename = datetime.now().strftime("%a, %d %b %Y %H.%M")
-        with open(os.path.join("logs",f"{filename}.txt"),"w+") as file:
-            file.write(f"we just reset the file {code}")
+    time.sleep(10)
+    reset_data = requests.get("http://localhost:9000/get/reset/details")
 
-        print("Resetting .... !!")
+    if reset_data:
+
+        details = reset_data.json()
+        timeStart = parser.parse(details['time'])
+        timeEnd = timeStart + timedelta(minutes=1)
+
+        timeEnd = timeEnd.strftime("%I:%M%p")
+        timeStart = timeStart.strftime("%I:%M%p")
+
+        timeNow = datetime.now().strftime("%I:%M%p")
+
+        if isNowInTimePeriod(timeStart, timeEnd, timeNow):
+
+            # online request
+            online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details["key_"]})
+            log(online.json())
+
+            # offline request
+            offline = requests.post("http://localhost:1000/reset/ticket/counter")
+            log(offline.json())
+        else:
+            log("its not time to reset yet!")
     else:
-        print("its not time to reset yet!!")
-
-
-@sio.event
-def connect():
-    print('connection established')
-
-
-@sio.event
-def disconnect():
-    print('disconnected from server')
-
-
-try:
-    sio.connect("http://localhost:5000/")
-except socketio.exceptions.ConnectionError:
-    print("Error! Could not connect to the socket server.")
+        log("Application not activated.")
 
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", debug=True, port=9999)

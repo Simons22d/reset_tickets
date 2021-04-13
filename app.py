@@ -27,27 +27,29 @@ while True:
     reset_data = requests.get("http://localhost:9000/get/reset/details")
 
     if reset_data:
+            details = reset_data.json()
+            timeStart = parser.parse(details['time'])
+            timeEnd = timeStart + timedelta(seconds=1)
 
-        details = reset_data.json()
-        timeStart = parser.parse(details['time'])
-        timeEnd = timeStart + timedelta(minutes=1)
+            timeEnd = timeEnd.strftime("%I:%M%p")
+            timeStart = timeStart.strftime("%I:%M%p")
 
-        timeEnd = timeEnd.strftime("%I:%M%p")
-        timeStart = timeStart.strftime("%I:%M%p")
+            timeNow = datetime.now().strftime("%I:%M%p")
+            print(timeStart,timeEnd,timeNow)
+            if isNowInTimePeriod(timeStart, timeEnd, timeNow):
+                if details["active"]:
 
-        timeNow = datetime.now().strftime("%I:%M%p")
+                    # online request
+                    online = requests.post("http://localhost:4000/reset/ticket/counter", json={"key_": details["key_"]})
+                    log(online.json())
 
-        if isNowInTimePeriod(timeStart, timeEnd, timeNow):
-
-            # online request
-            online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details["key_"]})
-            log(online.json())
-
-            # offline request
-            offline = requests.post("http://localhost:1000/reset/ticket/counter")
-            log(offline.json())
-        else:
-            log("its not time to reset yet!")
+                    # offline request
+                    offline = requests.post("http://localhost:1000/reset/ticket/counter")
+                    log(offline.json())
+                else:
+                    log("Tickets are not set to reset")
+            else:
+                log("its not time to reset yet!")
     else:
         log("Application not activated.")
 

@@ -36,21 +36,21 @@ while True:
 
             timeNow = datetime.now().strftime("%I:%M%p")
             print(timeStart,timeEnd,timeNow)
-            if isNowInTimePeriod(timeStart, timeEnd, timeNow):
-                if details["active"]:
-
-                    # online request
-                    online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details[
-                        "key_"]})
-                    log(online.json())
-
-                    # offline request
-                    offline = requests.post("http://localhost:1000/reset/ticket/counter")
-                    log(offline.json())
+            try:
+                if isNowInTimePeriod(timeStart, timeEnd, timeNow):
+                    if details["active"]:
+                        # online request
+                        online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details[
+                            "key_"]})
+                        # offline request
+                        offline = requests.post("http://localhost:1000/reset/ticket/counter")
+                        log(offline.json())
+                    else:
+                        log("Tickets are not set to reset")
                 else:
-                    log("Tickets are not set to reset")
-            else:
-                log("its not time to reset yet!")
+                    log("its not time to reset yet!")
+            except requests.exceptions.ConnectionError:
+                log("")
     else:
         log("Application not activated.")
 

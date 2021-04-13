@@ -40,7 +40,8 @@ while True:
                 if details["active"]:
 
                     # online request
-                    online = requests.post("http://localhost:4000/reset/ticket/counter", json={"key_": details["key_"]})
+                    online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details[
+                        "key_"]})
                     log(online.json())
 
                     # offline request

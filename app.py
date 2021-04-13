@@ -24,35 +24,43 @@ def log(msg):
 # get db reset time
 while True:
     time.sleep(10)
-    reset_data = requests.get("http://localhost:9000/get/reset/details")
-
-    if reset_data:
+    try:
+        reset_data = requests.get("http://localhost:9000/get/reset/details")
+        if reset_data:
             details = reset_data.json()
-            timeStart = parser.parse(details['time'])
-            timeEnd = timeStart + timedelta(seconds=1)
-
-            timeEnd = timeEnd.strftime("%I:%M%p")
-            timeStart = timeStart.strftime("%I:%M%p")
-
-            timeNow = datetime.now().strftime("%I:%M%p")
-            print(timeStart,timeEnd,timeNow)
             try:
+
+                timeStart = parser.parse(details['time'])
+                timeEnd = timeStart + timedelta(minutes=1)
+
+                timeEnd = timeEnd.strftime("%I:%M%p")
+                timeStart = timeStart.strftime("%I:%M%p")
+
+                timeNow = datetime.now().strftime("%I:%M%p")
+                print(timeStart, timeEnd, timeNow)
                 if isNowInTimePeriod(timeStart, timeEnd, timeNow):
-                    if details["active"]:
-                        # online request
-                        online = requests.post("http://159.65.144.235:4000/reset/ticket/counter", json={"key_": details[
-                            "key_"]})
-                        # offline request
-                        offline = requests.post("http://localhost:1000/reset/ticket/counter")
-                        log(offline.json())
-                    else:
-                        log("Tickets are not set to reset")
+                    try:
+                        if details["active"]:
+                            # online request
+                            online = requests.post("http://159.65.144.235:4000/reset/ticket/counter",
+                                                   json={"key_": details[
+                                                       "key_"]})
+                            # offline request
+                            offline = requests.post("http://localhost:1000/reset/ticket/counter")
+                            log("we are eveluatiing reset")
+                        else:
+                            log("Tickets are not set to reset")
+                        continue
+                    except requests.exceptions.ConnectionError:
+                        log("cannot connect to the reset servers")
                 else:
                     log("its not time to reset yet!")
-            except requests.exceptions.ConnectionError:
-                log("")
-    else:
-        log("Application not activated.")
+            except KeyError:
+                log("reset time has not been set")
+        else:
+            log("Application not activated.")
+    except requests.exceptions.ConnectionError:
+        log("cannot connect to details server")
 
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", debug=True, port=9999)

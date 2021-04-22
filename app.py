@@ -3,23 +3,40 @@ import time
 from datetime import datetime, timedelta
 import requests
 from dateutil import parser
+import math
+import socketio
 
+local_sockets = "http://localhost:5500/"
 link = "http://localhost:4000"
 link_ip = "159.65.144.235"
 
+sio_local = socketio.Client()
 
-def isNowInTimePeriod(startTime, endTime, nowTime):
-    if startTime < endTime:
-        # nowTime >= startTime and nowTime <= endTime
-        return startTime <= nowTime <= endTime
-    else:
-        return nowTime >= startTime or nowTime <= endTime
+
+# socket connections
+@sio_local.event
+def connect():
+    log('Local Socket Connected')
+
+
+@sio_local.event
+def disconnect():
+    log('Local Socket connected')
+
+
+def is_now_in_time_period(startTime, endTime, nowTime):
+    return startTime <= nowTime <= endTime
 
 
 def log(msg):
     print(f"{datetime.now().strftime('%d:%m:%Y %H:%M:%S')} — {msg}")
     return True
 
+
+try:
+    sio_local.connect(local_sockets)
+except socketio.exceptions.ConnectionError as a:
+    log(f"[offline] -> {a}")
 
 # get db reset time
 while True:
@@ -29,16 +46,16 @@ while True:
         if reset_data:
             details = reset_data.json()
             try:
+                start = parser.parse(details['time'])
+                now = datetime.now()
+                offset = start + timedelta(seconds=10)
 
-                timeStart = parser.parse(details['time'])
-                timeEnd = timeStart + timedelta(minutes=1)
+                final_start = math.ceil(start.timestamp())
+                final_now = math.ceil(now.timestamp())
+                final_end = math.ceil(offset.timestamp())
 
-                timeEnd = timeEnd.strftime("%I:%M%p")
-                timeStart = timeStart.strftime("%I:%M%p")
-
-                timeNow = datetime.now().strftime("%I:%M%p")
-                print(timeStart, timeEnd, timeNow)
-                if isNowInTimePeriod(timeStart, timeEnd, timeNow):
+                # print(final_start,final_now,final_end)
+                if is_now_in_time_period(final_start, final_end, final_now):
                     try:
                         if details["active"]:
                             # online request
@@ -47,21 +64,18 @@ while True:
                                                        "key_"]})
                             # offline request
                             offline = requests.post("http://localhost:1000/reset/ticket/counter")
-                            log("we are eveluatiing reset")
+                            log("we are evaluating reset")
+                            sio_local.emit("reset_status", {})
                         else:
                             log("Tickets are not set to reset")
                         continue
                     except requests.exceptions.ConnectionError:
                         log("cannot connect to the reset servers")
                 else:
-                    log("its not time to reset yet!")
+                    pass
             except KeyError:
                 log("reset time has not been set")
         else:
             log("Application not activated.")
     except requests.exceptions.ConnectionError:
         log("cannot connect to details server")
-
-if __name__ == "__main__":
-    # app.run(host="0.0.0.0", debug=True, port=9999)
-    eventlet.wsgi.server(eventlet.listen(('', 9999)), app)

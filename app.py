@@ -48,13 +48,14 @@ while True:
             try:
                 start = parser.parse(details['time'])
                 now = datetime.now()
-                offset = start + timedelta(seconds=10)
+                offset = start + timedelta(seconds=30)
+                log(details["time"])
 
                 final_start = math.ceil(start.timestamp())
                 final_now = math.ceil(now.timestamp())
                 final_end = math.ceil(offset.timestamp())
 
-                # print(final_start,final_now,final_end)
+                print(final_start,final_now,final_end)
                 if is_now_in_time_period(final_start, final_end, final_now):
                     log("its time reset time ...")
                     try:

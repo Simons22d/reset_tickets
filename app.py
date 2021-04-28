@@ -56,6 +56,7 @@ while True:
 
                 # print(final_start,final_now,final_end)
                 if is_now_in_time_period(final_start, final_end, final_now):
+                    log("its time reset time ...")
                     try:
                         if details["active"]:
                             # online request
